@@ -1,36 +1,37 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Team Manager — Asistente Inteligente de Gestión
 
-## Getting Started
+Una plataforma moderna, rápida y estéticamente premium para la gestión integral de equipos de trabajo, inventario y tareas, potenciada por Inteligencia Artificial.
 
-First, run the development server:
+## 🚀 Características Principales
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- **Dashboard "Resumen":** Vista inmediata del estado del equipo (quién está en la oficina, quién en remoto, ausencias y tareas críticas).
+- **Gestión de Personal:** Listado jerárquico de miembros (Director, Coordinación, Técnicos, Expedientes, OR, Analista Legal) con ordenamiento automático.
+- **Asistente IA (Gemini Pro):** Chat inteligente que responde consultas sobre la base de datos en lenguaje natural (ej: "¿Quiénes están ausentes hoy?", "¿Qué tareas vencen esta semana?").
+- **Matriz de Home Office:** Grilla interactiva global para configurar los días presenciales y remotos de todo el personal de un vistazo.
+- **Control de Ausencias:** Seguimiento de vacaciones, licencias y otros motivos con impacto directo en el dashboard diario.
+- **Inventario de Equipamiento:** Registro y asignación de hardware (notebooks, periféricos) vinculado a los miembros del equipo.
+- **PWA (Progressive Web App):** Instalable en PC y móviles, con ícono personalizado y experiencia de aplicación nativa.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🛠️ Tech Stack
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+- **Framework:** [Next.js 15+](https://nextjs.org/) (App Router)
+- **Base de Datos:** [Supabase](https://supabase.com/) (PostgreSQL + Auth + RLS)
+- **IA:** Google Gemini API (v1beta / gemini-pro)
+- **Estilos:** Vanilla CSS con un sistema de diseño "Premium Dark" y animaciones fluidas.
+- **PWA:** @serwist/next
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## ⚙️ Configuración
 
-## Learn More
+1. Clonar el repositorio.
+2. Instalar dependencias: `npm install`.
+3. Configurar las siguientes variables en `.env.local`:
+   ```env
+   NEXT_PUBLIC_SUPABASE_URL=tu_url_de_supabase
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=tu_anon_key
+   ADMIN_USER_UUID=tu_uuid_de_usuario_admin
+   GEMINI_API_KEY=tu_clave_de_gemini_ai
+   ```
+4. Ejecutar el servidor de desarrollo: `npm run dev`.
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+Desarrollado con foco en la eficiencia operativa y la experiencia de usuario moderna.
