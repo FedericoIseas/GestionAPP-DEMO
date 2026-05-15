@@ -1,0 +1,17 @@
+{
+  "name": "Team Manager App",
+  "short_name": "Team Manager",
+  "description": "Aplicación de gestión de equipos, tareas, asistencia e inventario.",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#0b1326",
+  "theme_color": "#adc6ff",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "192x192 512x512 any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#171f33" />
+      <stop offset="100%" stop-color="#0b1326" />
+    </linearGradient>
+    <linearGradient id="iconGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#adc6ff" />
+      <stop offset="100%" stop-color="#4edea3" />
+    </linearGradient>
+  </defs>
+
+  <!-- Fondo oscuro -->
+  <rect width="512" height="512" rx="112" fill="url(#bgGrad)" />
+  <!-- Borde sutil -->
+  <rect width="508" height="508" x="2" y="2" rx="110" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="4" />
+
+  <!-- Logo (Abstract Team) -->
+  <g transform="translate(128, 140)">
+    <!-- Persona izquierda (más chica, secundaria) -->
+    <circle cx="32" cy="100" r="28" fill="#4edea3" />
+    <path d="M32 144 c-32 0 -60 24 -60 60 v12 h120 v-12 c0 -36 -28 -60 -60 -60 z" fill="#4edea3" opacity="0.9" />
+
+    <!-- Persona derecha (más chica, secundaria) -->
+    <circle cx="224" cy="100" r="28" fill="#ffb95f" />
+    <path d="M224 144 c-32 0 -60 24 -60 60 v12 h120 v-12 c0 -36 -28 -60 -60 -60 z" fill="#ffb95f" opacity="0.9" />
+
+    <!-- Persona centro (principal) -->
+    <circle cx="128" cy="64" r="36" fill="#adc6ff" />
+    <path d="M128 116 c-44 0 -80 32 -80 80 v20 h160 v-20 c0 -48 -36 -80 -80 -80 z" fill="#adc6ff" />
+  </g>
+</svg>
