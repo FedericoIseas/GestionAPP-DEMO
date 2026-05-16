@@ -829,3 +829,97 @@ button { font-family: inherit; }
   0%, 100% { opacity: 0.3; transform: scale(1); }
   50% { opacity: 1; transform: scale(1.2); }
 }
+
+/* ============================================================
+   RESPONSIVE — MOBILE IMPROVEMENTS
+   ============================================================ */
+
+/* Tablet & Mobile base */
+@media (max-width: 1023px) {
+
+  /* Page header: stack fecha y hora en móvil */
+  .page-header {
+    padding: 56px 16px 16px;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .page-header h1 { font-size: 22px; }
+  .page-header-sub {
+    font-size: 12px;
+    flex-wrap: wrap;
+    gap: 4px !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+  }
+  /* Ocultar el separador "|" en móvil */
+  .page-header-sub span[style*="opacity: 0.5"] { display: none; }
+
+  /* Stats grid: 2 columnas en tablet */
+  .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+
+  /* Content stage */
+  .content-stage { padding: 0 12px 24px; }
+
+  /* Tablas horizontalmente scrolleables en móvil */
+  .data-table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .data-table { min-width: 520px; }
+
+  /* Modal ocupa más pantalla en mobile */
+  .modal {
+    padding: 24px 16px;
+    border-radius: 16px;
+    max-height: 95vh;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  /* Form row se apila */
+  .form-row { grid-template-columns: 1fr; gap: 12px; }
+
+  /* Grid de acciones en modal se ajusta */
+  .modal-actions { flex-wrap: wrap; gap: 8px; }
+  .modal-actions button { flex: 1; justify-content: center; min-width: 100px; }
+}
+
+/* Solo móvil (< 640px) */
+@media (max-width: 640px) {
+
+  /* Stats: 1 columna sola */
+  .stats-grid { grid-template-columns: 1fr; }
+
+  /* AI Chat flotante: ventana full-width en móvil */
+  .ai-chat-float {
+    bottom: 16px;
+    right: 16px;
+  }
+  .ai-chat-window {
+    position: fixed;
+    bottom: 80px;
+    right: 8px;
+    left: 8px;
+    width: auto;
+    height: 70vh;
+    max-height: 520px;
+    border-radius: 20px;
+  }
+
+  /* AI Chat input más cómodo al teclear */
+  .ai-chat-input { font-size: 16px; /* evita zoom automático en iOS */ }
+
+  /* Login card */
+  .login-card {
+    padding: 24px 20px !important;
+    margin: 16px;
+  }
+
+  /* Empty state más compacto */
+  .empty-state { padding: 40px 16px; }
+
+  /* Badges en tabla se achican */
+  .badge { font-size: 10px; padding: 3px 8px; }
+
+  /* Ocultar columnas secundarias de tablas en móvil */
+  .hide-mobile { display: none !important; }
+}
+
