@@ -8,16 +8,31 @@ export default async function DashboardPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/auth/login");
 
-  // Fechas y días
-  const today = new Date();
-  // Adjust for timezone offset for accurate YYYY-MM-DD local
-  const offset = today.getTimezoneOffset();
-  const localToday = new Date(today.getTime() - (offset*60*1000));
-  const todayString = localToday.toISOString().split('T')[0];
-  const dayOfWeek = today.getDay(); // 0 is Sunday, 1 is Monday
-
-  const hora = today.getHours();
+  // Fechas y días (Forzar zona horaria de Argentina)
+  const formatter = new Intl.DateTimeFormat("es-AR", {
+    timeZone: "America/Argentina/Buenos_Aires",
+    year: "numeric", month: "2-digit", day: "2-digit",
+    hour: "2-digit", minute: "2-digit", hour12: false
+  });
+  
+  const parts = formatter.formatToParts(new Date());
+  const getPart = (type) => parts.find(p => p.type === type).value;
+  
+  const todayString = `${getPart("year")}-${getPart("month")}-${getPart("day")}`;
+  const dayOfWeek = new Date(`${todayString}T12:00:00`).getDay();
+  const hora = parseInt(getPart("hour"), 10);
+  
   const saludo = hora < 12 ? "Buenos días" : hora < 18 ? "Buenas tardes" : "Buenas noches";
+  
+  const fechaLargaRaw = new Intl.DateTimeFormat("es-AR", {
+    timeZone: "America/Argentina/Buenos_Aires",
+    weekday: "long", day: "numeric", month: "long", year: "numeric",
+    hour: "2-digit", minute: "2-digit", hour12: false
+  }).format(new Date());
+  // El formato devuelve algo como "viernes, 15 de mayo de 2026, 22:04"
+  // Queremos que diga "Viernes, 15 de mayo de 2026 - 22:04 hs"
+  let fechaFormateada = fechaLargaRaw.charAt(0).toUpperCase() + fechaLargaRaw.slice(1);
+  fechaFormateada = fechaFormateada.replace(",", " -") + " hs";
 
   // Fetch data en paralelo para acelerar el renderizado
   const [
@@ -57,7 +72,9 @@ export default async function DashboardPage() {
     <>
       <header className="page-header" style={{ paddingBottom: 24 }}>
         <div>
-          <p className="page-header-sub" style={{ marginBottom: 4 }}>{saludo} 👋</p>
+          <p className="page-header-sub" style={{ marginBottom: 4, display: "flex", alignItems: "center", gap: 8 }}>
+            {saludo} 👋 <span style={{ opacity: 0.5 }}>|</span> <span>{fechaFormateada}</span>
+          </p>
           <h1 style={{ fontSize: 32, fontWeight: 700, color: "var(--on-surface)" }}>Resumen</h1>
         </div>
         <div style={{ display: "flex", gap: 12 }}>
