@@ -22,6 +22,8 @@ export default async function DashboardPage() {
   const dayOfWeek = new Date(`${todayString}T12:00:00`).getDay();
   const hora = parseInt(getPart("hour"), 10);
   
+  const esFinDeSemana = dayOfWeek === 0 || dayOfWeek === 6;
+  
   const saludo = hora < 12 ? "Buenos días" : hora < 18 ? "Buenas tardes" : "Buenas noches";
   
   const fechaLargaRaw = new Intl.DateTimeFormat("es-AR", {
@@ -54,9 +56,14 @@ export default async function DashboardPage() {
   const hoIds = homeOfficeHoy?.map(h => h.miembro_id) || [];
   const ORsEnOficina = todosLosMiembros?.filter(m => 
     m.equipo === "Oficiales de Registro" && !ausentesIds.includes(m.id) && !hoIds.includes(m.id)
-  ) || [];
+  ).sort((a, b) => a.apellido.localeCompare(b.apellido)) || [];
 
-  const stats = [
+  const stats = esFinDeSemana ? [
+    { label: "Miembros activos", value: totalMiembros || 0, sub: "Total del equipo", pct: 100, icon: "group", color: "#adc6ff", shadow: "rgba(173,198,255,0.5)" },
+    { label: "En oficina hoy", value: "—", sub: "Día no laboral", pct: 0, icon: "domain", color: "#4edea3", shadow: "rgba(78,222,163,0.5)" },
+    { label: "Home office hoy", value: "—", sub: "Día no laboral", pct: 0, icon: "home", color: "#adc6ff", shadow: "rgba(173,198,255,0.5)" },
+    { label: "Ausentes hoy", value: "—", sub: "Día no laboral", pct: 0, icon: "event_busy", color: "#ffb4ab", shadow: "rgba(255,180,171,0.5)" },
+  ] : [
     { label: "Miembros activos", value: totalMiembros || 0, sub: "Total del equipo", pct: 100, icon: "group", color: "#adc6ff", shadow: "rgba(173,198,255,0.5)" },
     { label: "En oficina hoy", value: (totalMiembros || 0) - (homeOfficeHoy?.length || 0) - (ausentesHoy?.length || 0), sub: "Presenciales", pct: totalMiembros ? (((totalMiembros - (homeOfficeHoy?.length || 0) - (ausentesHoy?.length || 0)) / totalMiembros) * 100) : 0, icon: "domain", color: "#4edea3", shadow: "rgba(78,222,163,0.5)" },
     { label: "Home office hoy", value: homeOfficeHoy?.length || 0, sub: "Remotos", pct: totalMiembros ? (((homeOfficeHoy?.length || 0) / totalMiembros) * 100) : 0, icon: "home", color: "#adc6ff", shadow: "rgba(173,198,255,0.5)" },
@@ -77,13 +84,18 @@ export default async function DashboardPage() {
           </p>
           <h1 style={{ fontSize: 32, fontWeight: 700, color: "var(--on-surface)" }}>Resumen</h1>
         </div>
-        <div style={{ display: "flex", gap: 12 }}>
-           <div className="search-bar">
-            <span className="material-symbols-outlined" style={{ fontSize: 20, marginRight: 8 }}>search</span>
-            <span>Buscar...</span>
+      
+      </header>
+
+      {esFinDeSemana && (
+        <div style={{ background: "rgba(255,185,95,0.12)", border: "1px solid rgba(255,185,95,0.3)", borderRadius: 12, padding: "16px 20px", marginBottom: 20, display: "flex", alignItems: "center", gap: 12 }}>
+          <span className="material-symbols-outlined" style={{ color: "#ffb95f", fontSize: 28 }}>weekend</span>
+          <div>
+            <div style={{ fontWeight: 600, color: "var(--on-surface)" }}>Hoy es día no laboral</div>
+            <div style={{ fontSize: 14, color: "var(--on-surface-variant)" }}>Los indicadores de asistencia corresponden al próximo día hábil.</div>
           </div>
         </div>
-      </header>
+      )}
 
       <section className="content-stage">
         {/* Stats */}
