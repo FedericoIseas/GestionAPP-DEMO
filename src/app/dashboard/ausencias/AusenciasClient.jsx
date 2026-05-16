@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { useRouter } from "next/navigation";
 
 const TIPOS = ["Vacaciones", "Licencia", "Ausencia", "Feriado", "Otro"];
 const TIPO_BADGE = {
@@ -20,11 +21,32 @@ function formatDate(d) {
 }
 
 export default function AusenciasClient({ ausencias: initial, miembros }) {
+  const router = useRouter();
   const [ausencias, setAusencias] = useState(initial);
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(EMPTY);
   const [saving, setSaving] = useState(false);
+  const [importing, setImporting] = useState(false);
+
+  async function handleImport() {
+    if (!confirm("Esto va a leer el archivo 'Licencias Firma Digital.xlsx' y sumará las licencias a esta lista. ¿Continuar?")) return;
+    setImporting(true);
+    try {
+      const res = await fetch("/api/import-ausencias", { method: "POST" });
+      const data = await res.json();
+      if (res.ok) {
+        alert(data.message);
+        window.location.reload(); // Recargar para ver los datos frescos
+      } else {
+        alert("Error al importar: " + data.error);
+      }
+    } catch (e) {
+      alert("Error de conexión al importar");
+    } finally {
+      setImporting(false);
+    }
+  }
 
   function openNew() { setEditing(null); setForm(EMPTY); setShowModal(true); }
   function openEdit(a) {
@@ -51,6 +73,7 @@ export default function AusenciasClient({ ausencias: initial, miembros }) {
     }
     setSaving(false);
     setShowModal(false);
+    router.refresh();
   }
 
   async function handleDelete(a) {
@@ -64,13 +87,19 @@ export default function AusenciasClient({ ausencias: initial, miembros }) {
     <>
       <div className="page-header">
         <div>
-          <h1>Ausencias</h1>
-          <p className="page-header-sub">{ausencias.length} registradas</p>
+          <h1>Ausencias y Licencias</h1>
+          <p className="page-header-sub">{ausencias.length} registradas en la base de datos</p>
         </div>
-        <button className="btn-primary" onClick={openNew}>
-          <span className="material-symbols-outlined" style={{ fontSize: 20 }}>event_busy</span>
-          Nueva ausencia
-        </button>
+        <div style={{ display: "flex", gap: 12 }}>
+          <button className="btn-secondary" onClick={handleImport} disabled={importing}>
+            <span className="material-symbols-outlined" style={{ fontSize: 20 }}>sync</span>
+            {importing ? "Sincronizando..." : "Sincronizar Excel"}
+          </button>
+          <button className="btn-primary" onClick={openNew}>
+            <span className="material-symbols-outlined" style={{ fontSize: 20 }}>add</span>
+            Nueva ausencia
+          </button>
+        </div>
       </div>
 
       <div className="content-stage">

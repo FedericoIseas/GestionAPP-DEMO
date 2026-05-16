@@ -71,7 +71,7 @@ function LoginContent() {
         <form onSubmit={handleLogin}>
           <div className="form-group">
             <label className="form-label">Email</label>
-            <div className="input-wrapper">Gestión de equipo
+            <div className="input-wrapper">
               <div className="input-icon">
                 <span className="material-symbols-outlined" style={{ fontSize: 18 }}>mail</span>
               </div>

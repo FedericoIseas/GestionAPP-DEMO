@@ -19,33 +19,20 @@ export default async function DashboardPage() {
   const hora = today.getHours();
   const saludo = hora < 12 ? "Buenos días" : hora < 18 ? "Buenas tardes" : "Buenas noches";
 
-  // Fetch data
-  const { data: todosLosMiembros, count: totalMiembros } = await supabase
-    .from("miembros")
-    .select("id, nombre, apellido, equipo", { count: "exact" })
-    .eq("activo", true);
-
-  const { data: ausentesHoy } = await supabase
-    .from("ausencias")
-    .select("*, miembros(nombre, apellido)")
-    .eq("activo", true)
-    .lte("fecha_inicio", todayString)
-    .gte("fecha_fin", todayString);
-
-  const { data: proximasAusencias } = await supabase
-    .from("ausencias")
-    .select("*, miembros(nombre, apellido)")
-    .eq("activo", true)
-    .gt("fecha_inicio", todayString)
-    .order("fecha_inicio", { ascending: true })
-    .limit(5);
-
-  const { data: homeOfficeHoy } = await supabase
-    .from("horarios")
-    .select("*, miembros(nombre, apellido)")
-    .eq("activo", true)
-    .eq("dia_semana", dayOfWeek)
-    .eq("es_home_office", true);
+  // Fetch data en paralelo para acelerar el renderizado
+  const [
+    { data: todosLosMiembros, count: totalMiembros },
+    { data: ausentesHoy },
+    { data: proximasAusencias },
+    { data: homeOfficeHoy },
+    { data: tareasPendientes }
+  ] = await Promise.all([
+    supabase.from("miembros").select("id, nombre, apellido, equipo", { count: "exact" }).eq("activo", true),
+    supabase.from("ausencias").select("*, miembros(nombre, apellido)").eq("activo", true).lte("fecha_inicio", todayString).gte("fecha_fin", todayString),
+    supabase.from("ausencias").select("*, miembros(nombre, apellido)").eq("activo", true).gt("fecha_inicio", todayString).order("fecha_inicio", { ascending: true }).limit(5),
+    supabase.from("horarios").select("*, miembros(nombre, apellido)").eq("activo", true).eq("dia_semana", dayOfWeek).eq("es_home_office", true),
+    supabase.from("proyectos").select("*, miembros(id, nombre, apellido, equipo)").eq("activo", true).neq("estado", "Completado").order("fecha_limite", { ascending: true }).limit(6)
+  ]);
 
 
   const ausentesIds = ausentesHoy?.map(a => a.miembro_id) || [];
@@ -53,14 +40,6 @@ export default async function DashboardPage() {
   const ORsEnOficina = todosLosMiembros?.filter(m => 
     m.equipo === "Oficiales de Registro" && !ausentesIds.includes(m.id) && !hoIds.includes(m.id)
   ) || [];
-
-  const { data: tareasPendientes } = await supabase
-    .from("proyectos")
-    .select("*, miembros(id, nombre, apellido, equipo)")
-    .eq("activo", true)
-    .neq("estado", "Completado")
-    .order("fecha_limite", { ascending: true, nullsFirst: false })
-    .limit(6);
 
   const stats = [
     { label: "Miembros activos", value: totalMiembros || 0, sub: "Total del equipo", pct: 100, icon: "group", color: "#adc6ff", shadow: "rgba(173,198,255,0.5)" },

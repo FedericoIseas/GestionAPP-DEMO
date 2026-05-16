@@ -9,17 +9,13 @@ export default async function AusenciasPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/auth/login");
 
-  const { data: ausencias } = await supabase
-    .from("ausencias")
-    .select("*, miembros(nombre, apellido)")
-    .eq("activo", true)
-    .order("fecha_inicio", { ascending: false });
-
-  const { data: miembros } = await supabase
-    .from("miembros")
-    .select("id, nombre, apellido")
-    .eq("activo", true)
-    .order("apellido");
+  const [
+    { data: ausencias },
+    { data: miembros }
+  ] = await Promise.all([
+    supabase.from("ausencias").select("*, miembros(nombre, apellido)").eq("activo", true).order("fecha_inicio", { ascending: false }),
+    supabase.from("miembros").select("id, nombre, apellido").eq("activo", true).order("apellido")
+  ]);
 
   return <AusenciasClient ausencias={ausencias || []} miembros={miembros || []} />;
 }

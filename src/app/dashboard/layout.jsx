@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import Sidebar from "@/components/layout/Sidebar";
-import AIChat from "@/components/ui/AIChat";
+import AIChat from "@/components/layout/AIChat";
 
 export default async function DashboardLayout({ children }) {
   const supabase = await createClient();
