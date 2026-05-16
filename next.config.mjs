@@ -1,7 +1,9 @@
 import withSerwistInit from "@serwist/next";
 
 /** @type {import('next').NextConfig} */
-const nextConfig = {};
+const nextConfig = {
+  turbopack: {},
+};
 
 const withSerwist = withSerwistInit({
   swSrc: "src/app/sw.js",
