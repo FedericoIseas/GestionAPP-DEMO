@@ -87,17 +87,16 @@ export default async function DashboardPage() {
       
       </header>
 
-      {esFinDeSemana && (
-        <div style={{ background: "rgba(255,185,95,0.12)", border: "1px solid rgba(255,185,95,0.3)", borderRadius: 12, padding: "16px 20px", marginBottom: 20, display: "flex", alignItems: "center", gap: 12 }}>
-          <span className="material-symbols-outlined" style={{ color: "#ffb95f", fontSize: 28 }}>weekend</span>
-          <div>
-            <div style={{ fontWeight: 600, color: "var(--on-surface)" }}>Hoy es día no laboral</div>
-            <div style={{ fontSize: 14, color: "var(--on-surface-variant)" }}>Los indicadores de asistencia corresponden al próximo día hábil.</div>
-          </div>
-        </div>
-      )}
-
       <section className="content-stage">
+        {esFinDeSemana && (
+          <div style={{ background: "rgba(255,185,95,0.12)", border: "1px solid rgba(255,185,95,0.3)", borderRadius: 12, padding: "16px 20px", display: "flex", alignItems: "center", gap: 12 }}>
+            <span className="material-symbols-outlined" style={{ color: "#ffb95f", fontSize: 28 }}>weekend</span>
+            <div>
+              <div style={{ fontWeight: 600, color: "var(--on-surface)" }}>Hoy es día no laboral</div>
+              <div style={{ fontSize: 14, color: "var(--on-surface-variant)" }}>Los indicadores de asistencia corresponden al próximo día hábil.</div>
+            </div>
+          </div>
+        )}
         {/* Stats */}
         <div className="stats-grid">
           {stats.map((stat) => (
