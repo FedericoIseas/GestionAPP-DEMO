@@ -145,7 +145,7 @@ Deduce las fechas según el día de hoy (${today}). Si falta información, preg�
 
     for (const model of candidates) {
       const genUrl = `https://generativelanguage.googleapis.com/v1beta/${model}:generateContent?key=${GEMINI_KEY}`;
-      
+
       const genRes = await fetch(genUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -206,7 +206,7 @@ Deduce las fechas según el día de hoy (${today}). Si falta información, preg�
             notas: actionData.notas || "Cargado por IA",
             activo: true
           }]);
-          
+
           if (!error) {
             finalResponseText = responseText.replace(/```json\n[\s\S]*?\n```/, "").trim();
             finalResponseText += "\n\n✅ **¡Acción ejecutada!** La ausencia fue registrada exitosamente en la base de datos.";

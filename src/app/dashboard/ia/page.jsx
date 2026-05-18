@@ -56,7 +56,14 @@ export default function AIPage() {
       mediaRecorder.start();
       setIsRecording(true);
     } catch (err) {
-      alert("No se pudo acceder al micrófono. Verificá los permisos del navegador.");
+      console.error("Error al acceder al micrófono:", err);
+      if (typeof window !== "undefined" && (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia)) {
+        alert("El acceso al micrófono requiere una conexión segura (HTTPS). Si estás probando en red local, asegurate de usar 'localhost' en tu navegador en lugar de la dirección IP.");
+      } else if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
+        alert("Permiso denegado. Habilitá el acceso al micrófono en la configuración de tu navegador para este sitio.");
+      } else {
+        alert(`No se pudo acceder al micrófono: ${err.message || err}`);
+      }
     }
   }
 

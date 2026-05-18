@@ -12,7 +12,7 @@ export default async function DashboardLayout({ children }) {
   return (
     <div className="app-layout">
       <Sidebar user={user} />
-      <main className="main-content" style={{ marginLeft: 280 }}>
+      <main className="main-content">
         {children}
       </main>
       <AIChat />

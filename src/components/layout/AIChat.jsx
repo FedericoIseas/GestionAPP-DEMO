@@ -26,6 +26,24 @@ export default function AIChat() {
     scrollToBottom();
   }, [messages]);
 
+  useEffect(() => {
+    const handleMobileMenuOpen = () => {
+      setIsOpen(false);
+    };
+    window.addEventListener("mobile-menu-open", handleMobileMenuOpen);
+    return () => {
+      window.removeEventListener("mobile-menu-open", handleMobileMenuOpen);
+    };
+  }, []);
+
+  const handleToggleChat = () => {
+    const nextState = !isOpen;
+    setIsOpen(nextState);
+    if (nextState) {
+      window.dispatchEvent(new CustomEvent("ai-chat-open"));
+    }
+  };
+
   async function startRecording() {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -39,7 +57,7 @@ export default function AIChat() {
 
       mediaRecorder.onstop = async () => {
         stream.getTracks().forEach(track => track.stop());
-        
+
         if (isCancellingRef.current) {
           isCancellingRef.current = false;
           return;
@@ -57,7 +75,14 @@ export default function AIChat() {
       mediaRecorder.start();
       setIsRecording(true);
     } catch (err) {
-      alert("No se pudo acceder al micrófono.");
+      console.error("Error al acceder al micrófono:", err);
+      if (typeof window !== "undefined" && (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia)) {
+        alert("El acceso al micrófono requiere una conexión segura (HTTPS). Si estás probando en red local, asegurate de usar 'localhost' en tu navegador en lugar de la dirección IP.");
+      } else if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
+        alert("Permiso denegado. Habilitá el acceso al micrófono en la configuración de tu navegador para este sitio.");
+      } else {
+        alert(`No se pudo acceder al micrófono: ${err.message || err}`);
+      }
     }
   }
 
@@ -88,12 +113,12 @@ export default function AIChat() {
         body: JSON.stringify({ audioData: base64Audio, mimeType }),
       });
       const data = await res.json();
-      
+
       if (data.text) {
         setMessages(prev => [...prev, { role: "ai", text: data.text, model: data.model }]);
         setQueryCount(prev => prev + 1);
         if (data.model) setLastModel(data.model);
-        
+
         if (data.text.includes("Acción ejecutada")) {
           setTimeout(() => window.location.reload(), 2000);
         }
@@ -123,12 +148,12 @@ export default function AIChat() {
         body: JSON.stringify({ message: userMsg }),
       });
       const data = await res.json();
-      
+
       if (data.text) {
         setMessages(prev => [...prev, { role: "ai", text: data.text, model: data.model }]);
         setQueryCount(prev => prev + 1);
         if (data.model) setLastModel(data.model);
-        
+
         if (data.text.includes("Acción ejecutada")) {
           setTimeout(() => window.location.reload(), 2000);
         }
@@ -159,7 +184,7 @@ export default function AIChat() {
                 )}
               </div>
             </div>
-            <button 
+            <button
               onClick={() => setIsOpen(false)}
               style={{ background: "none", border: "none", color: "var(--outline)", cursor: "pointer" }}
             >
@@ -197,8 +222,8 @@ export default function AIChat() {
                 <span style={{ marginLeft: 8, fontSize: 13, fontWeight: 500 }}>Grabando...</span>
               </div>
             ) : (
-              <input 
-                type="text" 
+              <input
+                type="text"
                 className="ai-chat-input"
                 placeholder="Pregunta algo..."
                 value={input}
@@ -206,7 +231,7 @@ export default function AIChat() {
                 disabled={loading}
               />
             )}
-            
+
             {isRecording ? (
               <div style={{ display: "flex", gap: 8 }}>
                 <button type="button" onClick={cancelRecording} className="btn-secondary" style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: 0, width: 36, height: 36, minWidth: 36, color: "var(--on-surface-variant)", borderColor: "var(--outline)", borderRadius: "50%" }} title="Cancelar">
@@ -223,9 +248,9 @@ export default function AIChat() {
             )}
 
             {!isRecording && (
-              <button 
-                type="submit" 
-                className="btn-primary" 
+              <button
+                type="submit"
+                className="btn-primary"
                 style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 40, height: 40, padding: 0, borderRadius: 10, flexShrink: 0 }}
                 disabled={loading}
               >
@@ -236,9 +261,9 @@ export default function AIChat() {
         </div>
       )}
 
-      <button 
-        className="ai-chat-btn" 
-        onClick={() => setIsOpen(!isOpen)}
+      <button
+        className="ai-chat-btn"
+        onClick={handleToggleChat}
         title="Asistente Inteligente"
       >
         <span className="material-symbols-outlined" style={{ fontSize: 28 }}>

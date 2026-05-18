@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -23,6 +23,23 @@ export default function Sidebar({ user }) {
   const [loggingOut, setLoggingOut] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
+  useEffect(() => {
+    const handleAIChatOpen = () => {
+      setMobileOpen(false);
+    };
+    window.addEventListener("ai-chat-open", handleAIChatOpen);
+    return () => {
+      window.removeEventListener("ai-chat-open", handleAIChatOpen);
+    };
+  }, []);
+
+  const handleToggleMobileOpen = (value) => {
+    setMobileOpen(value);
+    if (value) {
+      window.dispatchEvent(new CustomEvent("mobile-menu-open"));
+    }
+  };
+
   function isActive(href, exact) {
     if (exact) return pathname === href;
     return pathname.startsWith(href);
@@ -38,12 +55,12 @@ export default function Sidebar({ user }) {
   return (
     <>
       {/* Mobile hamburger */}
-      <button className="mobile-menu-btn" onClick={() => setMobileOpen(!mobileOpen)}>
+      <button className="mobile-menu-btn" onClick={() => handleToggleMobileOpen(!mobileOpen)}>
         <span className="material-symbols-outlined">{mobileOpen ? "close" : "menu"}</span>
       </button>
 
       {/* Mobile overlay */}
-      <div className={`mobile-overlay ${mobileOpen ? "open" : ""}`} onClick={() => setMobileOpen(false)} />
+      <div className={`mobile-overlay ${mobileOpen ? "open" : ""}`} onClick={() => handleToggleMobileOpen(false)} />
 
       {/* Sidebar */}
       <aside className={`sidebar ${mobileOpen ? "mobile-open" : ""}`}>
