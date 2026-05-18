@@ -62,7 +62,7 @@ export default function AIPage() {
       } else if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
         alert("Permiso denegado. Habilitá el acceso al micrófono en la configuración de tu navegador para este sitio.");
       } else {
-        alert(`No se pudo acceder al micrófono: ${err.message || err}`);
+        alert(`No se pudo acceder al micrófono: [${err.name}] ${err.message || err}`);
       }
     }
   }
