@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
+import * as XLSX from "xlsx";
 
 export default function DashboardClient({
   todosLosMiembros = [],
@@ -221,6 +222,46 @@ export default function DashboardClient({
 
     return { oficinaCount, homeCount, ausenteCount };
   }, [weeklyDaysData]);
+
+  const exportWeeklyExcel = () => {
+    const data = todosLosMiembros.map(m => {
+      const row = {
+        "Miembro": `${m.apellido}, ${m.nombre}`,
+        "Equipo": m.equipo || "—"
+      };
+
+      weekDays.forEach(day => {
+        const dateStr = getYYYYMMDD(day);
+        const dayIdx = day.getDay();
+        const dayName = day.toLocaleDateString("es-AR", { weekday: "long" });
+        const capitalizedDay = dayName.charAt(0).toUpperCase() + dayName.slice(1);
+
+        // 1. Ausencias
+        const ausencia = todasLasAusencias.find(a =>
+          a.activo && a.miembro_id === m.id && dateStr >= a.fecha_inicio && dateStr <= a.fecha_fin
+        );
+
+        if (ausencia) {
+          row[capitalizedDay] = `Ausente (${ausencia.tipo})`;
+          return;
+        }
+
+        // 2. Home Office
+        const ho = todosLosHorarios.find(h =>
+          h.activo && h.miembro_id === m.id && h.dia_semana === dayIdx && h.es_home_office
+        );
+
+        row[capitalizedDay] = ho ? "Home Office" : "Presencial";
+      });
+
+      return row;
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Cronograma Semanal");
+    XLSX.writeFile(workbook, `Asistencia_Semanal_${selectedDateString}.xlsx`);
+  };
 
   return (
     <>
@@ -443,25 +484,15 @@ export default function DashboardClient({
 
           {/* Lado derecho: Resumen rápido semanal (en Vista Semanal) */}
           {viewMode === "semanal" && (
-            <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                <span className="material-symbols-outlined" style={{ color: "#4edea3", fontSize: 14 }}>domain</span>
-                <span style={{ fontSize: 11, color: "var(--on-surface-variant)" }}>
-                  Presencial: <strong style={{ color: "#4edea3", fontFamily: "var(--font-mono)" }}>{weeklyTotals.oficinaCount}d</strong>
-                </span>
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                <span className="material-symbols-outlined" style={{ color: "#adc6ff", fontSize: 14 }}>home</span>
-                <span style={{ fontSize: 11, color: "var(--on-surface-variant)" }}>
-                  Home Office: <strong style={{ color: "#adc6ff", fontFamily: "var(--font-mono)" }}>{weeklyTotals.homeCount}d</strong>
-                </span>
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                <span className="material-symbols-outlined" style={{ color: "#ffb4ab", fontSize: 14 }}>event_busy</span>
-                <span style={{ fontSize: 11, color: "var(--on-surface-variant)" }}>
-                  Ausente: <strong style={{ color: "#ffb4ab", fontFamily: "var(--font-mono)" }}>{weeklyTotals.ausenteCount}d</strong>
-                </span>
-              </div>
+            <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+              <button onClick={exportWeeklyExcel} style={{ display: "flex", alignItems: "center", gap: 4, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 6, padding: "4px 8px", fontSize: 11, color: "var(--on-surface)", cursor: "pointer", height: 28 }}>
+                <span className="material-symbols-outlined" style={{ fontSize: 14 }}>description</span>
+                Excel
+              </button>
+              <button onClick={() => window.print()} style={{ display: "flex", alignItems: "center", gap: 4, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 6, padding: "4px 8px", fontSize: 11, color: "var(--on-surface)", cursor: "pointer", height: 28 }}>
+                <span className="material-symbols-outlined" style={{ fontSize: 14 }}>picture_as_pdf</span>
+                PDF
+              </button>
             </div>
           )}
         </div>

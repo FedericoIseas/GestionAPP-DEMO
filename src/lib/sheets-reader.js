@@ -1,7 +1,8 @@
 import * as XLSX from "xlsx";
 import fs from "fs";
+import path from "path";
 
-const FILE_PATH = "c:\\Users\\Fede9\\OneDrive\\Documentos\\ProyectosVS\\team-manager\\data\\Licencias Firma Digital.xlsx";
+const FILE_PATH = path.join(process.cwd(), "data", "Licencias Firma Digital.xlsx");
 
 let cachedData = null;
 let cacheTime = 0;

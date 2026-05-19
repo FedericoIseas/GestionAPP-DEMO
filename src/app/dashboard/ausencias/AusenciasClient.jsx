@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import * as XLSX from "xlsx";
@@ -60,23 +60,185 @@ export default function AusenciasClient({ ausencias: initial, miembros }) {
     XLSX.writeFile(workbook, "Listado_Ausencias.xlsx");
   }
 
-  async function handleImport() {
-    if (!confirm("Esto va a leer el archivo 'Licencias Firma Digital.xlsx' y sumará las licencias a esta lista. ¿Continuar?")) return;
-    setImporting(true);
-    try {
-      const res = await fetch("/api/import-ausencias", { method: "POST" });
-      const data = await res.json();
-      if (res.ok) {
-        alert(data.message);
-        window.location.reload(); // Recargar para ver los datos frescos
-      } else {
-        alert("Error al importar: " + data.error);
+  const fileInputRef = useRef(null);
+
+  function triggerFileInput() {
+    fileInputRef.current.click();
+  }
+
+  function formatExcelDate(serial) {
+    if (!serial) return "";
+    if (typeof serial !== "number") {
+      const str = String(serial).trim();
+      if (str.includes("/")) {
+        const parts = str.split("/");
+        if (parts.length === 3) {
+          const day = parts[0].padStart(2, "0");
+          const month = parts[1].padStart(2, "0");
+          const year = parts[2].length === 2 ? `20${parts[2]}` : parts[2];
+          return `${year}-${month}-${day}`;
+        }
       }
-    } catch (e) {
-      alert("Error de conexión al importar");
-    } finally {
-      setImporting(false);
+      return str;
     }
+    const date = new Date((serial - 25569) * 86400 * 1000);
+    return date.toISOString().split("T")[0];
+  }
+
+  async function handleFileChange(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setImporting(true);
+    const reader = new FileReader();
+
+    reader.onload = async (evt) => {
+      try {
+        const data = new Uint8Array(evt.target.result);
+        const workbook = XLSX.read(data, { type: "array" });
+
+        if (!workbook.SheetNames.includes("FSOLI")) {
+          alert("Error: El Excel cargado no contiene la pestaña 'FSOLI'.");
+          setImporting(false);
+          return;
+        }
+
+        const raw = XLSX.utils.sheet_to_json(workbook.Sheets["FSOLI"], { header: 1 });
+        if (raw.length <= 1) {
+          alert("Error: La pestaña 'FSOLI' está vacía.");
+          setImporting(false);
+          return;
+        }
+
+        const rows = raw.slice(1);
+
+        // Normalizador de nombres
+        const normalize = (str) => str ? str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim() : "";
+
+        const registrosNuevos = [];
+        const agentesNoEncontrados = new Set();
+
+        for (const row of rows) {
+          const agenteStr = row[3] || "";
+          if (!agenteStr) continue;
+
+          const desdeStr = formatExcelDate(row[0]);
+          const tipoStrOrig = row[2] || "";
+          const ccooStr = row[12] || "";
+          const observacionesStr = row[13] || "";
+
+          // Ignorar si no tiene fechas o es comisión
+          if (!desdeStr || !desdeStr.includes("-") || tipoStrOrig.toLowerCase().includes("comisión")) {
+            continue;
+          }
+
+          // Buscar el miembro correspondiente en la DB
+          const ag = normalize(agenteStr);
+          const miembroEncontrado = miembros.find(m => ag.includes(normalize(m.apellido)) || ag.includes(normalize(m.nombre)));
+
+          if (!miembroEncontrado) {
+            agentesNoEncontrados.add(agenteStr);
+            continue;
+          }
+
+          let tipoFinal = "Otro";
+          const tLower = tipoStrOrig.toLowerCase();
+          if (tLower.includes("lao") || tLower.includes("1109") || tLower.includes("vacaciones")) {
+            tipoFinal = "Vacaciones";
+          } else if (tLower.includes("13a") || tLower.includes("examen")) {
+            tipoFinal = "Licencia";
+          } else if (tLower.includes("14f") || tLower.includes("familiar")) {
+            tipoFinal = "Ausencia";
+          } else {
+            tipoFinal = "Licencia";
+          }
+
+          const hastaStr = formatExcelDate(row[1]) || desdeStr;
+
+          registrosNuevos.push({
+            miembro_id: miembroEncontrado.id,
+            tipo: tipoFinal,
+            fecha_inicio: desdeStr,
+            fecha_fin: hastaStr,
+            notes: `[Excel: ${tipoStrOrig}] ${observacionesStr || ccooStr}`.trim(),
+            activo: true
+          });
+        }
+
+        if (registrosNuevos.length === 0) {
+          alert("No se encontraron registros válidos o compatibles con los miembros cargados.");
+          setImporting(false);
+          return;
+        }
+
+        // Obtener ausencias existentes para deduplicar
+        const supabase = createClient();
+        const { data: dbAusencias } = await supabase.from("ausencias").select("miembro_id, fecha_inicio, fecha_fin");
+        
+        const setExistentes = new Set();
+        if (dbAusencias) {
+          for (const a of dbAusencias) {
+            setExistentes.add(`${a.miembro_id}_${a.fecha_inicio}_${a.fecha_fin}`);
+          }
+        }
+
+        // Filtrar duplicados
+        const registrosUnicos = registrosNuevos.map(r => ({
+          miembro_id: r.miembro_id,
+          tipo: r.tipo,
+          fecha_inicio: r.fecha_inicio,
+          fecha_fin: r.fecha_fin,
+          notas: r.notes,
+          activo: r.activo
+        })).filter(r => {
+          const key = `${r.miembro_id}_${r.fecha_inicio}_${r.fecha_fin}`;
+          if (setExistentes.has(key)) return false;
+          setExistentes.add(key);
+          return true;
+        });
+
+        if (registrosUnicos.length === 0) {
+          let msg = "Todos los registros ya estaban sincronizados. 0 importados.";
+          if (agentesNoEncontrados.size > 0) {
+            msg += `\n\nAgentes en Excel no reconocidos en la base de datos:\n• ${Array.from(agentesNoEncontrados).join("\n• ")}`;
+          }
+          alert(msg);
+          setImporting(false);
+          return;
+        }
+
+        // Insertar en Supabase
+        const { data: inserted, error: dbError } = await supabase
+          .from("ausencias")
+          .insert(registrosUnicos)
+          .select("*, miembros(nombre, apellido)");
+
+        if (dbError) {
+          alert("Error al guardar en base de datos: " + dbError.message);
+        } else {
+          setAusencias(prev => [...inserted, ...prev]);
+          
+          let msg = `¡Sincronización exitosa!\n\nSe importaron ${registrosUnicos.length} registros de ausencias nuevos.`;
+          if (agentesNoEncontrados.size > 0) {
+            msg += `\n\nAgentes omitidos (no registrados en tu Personal):\n• ${Array.from(agentesNoEncontrados).join("\n• ")}`;
+          }
+          alert(msg);
+        }
+      } catch (err) {
+        console.error(err);
+        alert("Ocurrió un error leyendo el archivo Excel: " + err.message);
+      } finally {
+        setImporting(false);
+        if (e.target) e.target.value = "";
+      }
+    };
+
+    reader.onerror = () => {
+      alert("Error al leer el archivo físico.");
+      setImporting(false);
+    };
+
+    reader.readAsArrayBuffer(file);
   }
 
   function openNew() { setEditing(null); setForm(EMPTY); setShowModal(true); }
@@ -130,10 +292,17 @@ export default function AusenciasClient({ ausencias: initial, miembros }) {
             <span className="material-symbols-outlined" style={{ fontSize: 20 }}>picture_as_pdf</span>
             PDF
           </button>
-          <button className="btn-secondary" onClick={handleImport} disabled={importing}>
-            <span className="material-symbols-outlined" style={{ fontSize: 20 }}>sync</span>
+          <button className="btn-secondary" onClick={triggerFileInput} disabled={importing}>
+            <span className="material-symbols-outlined" style={{ fontSize: 20 }}>upload_file</span>
             {importing ? "Sincronizando..." : "Sincronizar Excel"}
           </button>
+          <input
+            type="file"
+            accept=".xlsx, .xls"
+            ref={fileInputRef}
+            onChange={handleFileChange}
+            style={{ display: "none" }}
+          />
           <button className="btn-primary" onClick={openNew}>
             <span className="material-symbols-outlined" style={{ fontSize: 20 }}>add</span>
             Nueva ausencia
