@@ -18,8 +18,11 @@ function LoginContent() {
   useEffect(() => {
     setMounted(true);
     const err = searchParams.get("error");
+    const reason = searchParams.get("reason");
     if (err === "unauthorized") {
       setError("Acceso denegado. Esta aplicación es de uso exclusivo del administrador.");
+    } else if (reason === "idle") {
+      setError("Tu sesión ha expirado por inactividad (1 hora). Por favor, volvé a ingresar.");
     }
   }, [searchParams]);
 
