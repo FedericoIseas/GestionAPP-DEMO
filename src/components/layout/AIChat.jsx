@@ -31,6 +31,21 @@ export default function AIChat() {
       setIsOpen(false);
     };
     window.addEventListener("mobile-menu-open", handleMobileMenuOpen);
+
+    // Monitoreo de permisos de micrófono para debugging
+    if (typeof window !== "undefined" && navigator.permissions && navigator.permissions.query) {
+      navigator.permissions.query({ name: "microphone" })
+        .then(permissionStatus => {
+          console.log("🎤 [Team Manager] Estado del permiso de micrófono:", permissionStatus.state);
+          permissionStatus.onchange = () => {
+            console.log("🎤 [Team Manager] El estado del permiso cambió a:", permissionStatus.state);
+          };
+        })
+        .catch(err => {
+          console.warn("⚠️ [Team Manager] La API de permisos no soporta 'microphone' en este navegador:", err);
+        });
+    }
+
     return () => {
       window.removeEventListener("mobile-menu-open", handleMobileMenuOpen);
     };
