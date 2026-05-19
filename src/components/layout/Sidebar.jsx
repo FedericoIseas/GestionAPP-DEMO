@@ -69,7 +69,7 @@ export default function Sidebar({ user }) {
             <span className="material-symbols-outlined" style={{ color: "#00285d", fontSize: 24 }}>group_work</span>
           </div>
           <div>
-            <div className="sidebar-title">Gestión de equipo</div>
+            <div className="sidebar-title">GestionApp FD</div>
             <div className="sidebar-subtitle">Panel de administración</div>
           </div>
         </div>

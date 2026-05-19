@@ -2,10 +2,10 @@ import "@/app/globals.css";
 
 export const metadata = {
   title: {
-    default: "Gestión de equipo",
-    template: "%s · Gestión de equipo",
+    default: "GestionApp FD",
+    template: "%s · GestionApp FD",
   },
-  description: "Gestión de equipo — panel de administración privado",
+  description: "GestionApp FD — panel de administración privado",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,

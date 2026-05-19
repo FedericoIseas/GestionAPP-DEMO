@@ -1,7 +1,7 @@
 {
   "name": "Team Manager App",
   "short_name": "Team Manager",
-  "description": "Aplicación de gestión de equipos, tareas, asistencia e inventario.",
+  "description": "Aplicación de GestionApp FDs, tareas, asistencia e inventario.",
   "start_url": "/dashboard",
   "display": "standalone",
   "background_color": "#0b1326",
