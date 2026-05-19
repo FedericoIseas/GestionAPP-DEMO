@@ -1,6 +1,6 @@
 {
-  "name": "Team Manager App",
-  "short_name": "Team Manager",
+  "name": "GestionApp - FD App",
+  "short_name": "GestionApp - FD",
   "description": "Aplicación de GestionApp FDs, tareas, asistencia e inventario.",
   "start_url": "/dashboard",
   "display": "standalone",

@@ -61,7 +61,7 @@ function LoginContent() {
         <div className="login-logo">
           <span className="material-symbols-outlined" style={{ fontSize: 28, color: "#00285d" }}>group_work</span>
         </div>
-        <h1 className="login-title">Team Manager</h1>
+        <h1 className="login-title">GestionApp - FD</h1>
         <p className="login-subtitle">Panel de administración privado</p>
 
         {error && (

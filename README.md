@@ -1,4 +1,4 @@
-# Team Manager — Asistente Inteligente de Gestión
+# GestionApp - FD — Asistente Inteligente de Gestión
 
 Una plataforma moderna, rápida y estéticamente premium para la gestión integral de equipos de trabajo, inventario y tareas, potenciada por Inteligencia Artificial.
 

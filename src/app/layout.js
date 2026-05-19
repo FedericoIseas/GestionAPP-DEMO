@@ -10,7 +10,7 @@ export const metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Team Manager",
+    title: "GestionApp - FD",
   },
 };
 

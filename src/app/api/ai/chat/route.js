@@ -37,7 +37,7 @@ export async function POST(req) {
     const sheetsData = readSheetsData();
 
     const systemPrompt = `
-Eres "Team Manager AI", un asistente inteligente experto en GestionApp FDs de la Dirección Nacional de Firma Digital.
+Eres "GestionApp - FD AI", un asistente inteligente experto en GestionApp FDs de la Dirección Nacional de Firma Digital.
 Responde consultas del administrador basándote ÚNICAMENTE en los datos proporcionados.
 Hoy es ${today}.
 
