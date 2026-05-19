@@ -224,9 +224,9 @@ export default function DashboardClient({
 
   return (
     <>
-      <div className="content-stage" style={{ paddingTop: 32 }}>
+      <div className="content-stage" style={{ paddingTop: 16, gap: 16 }}>
         {/* Cabecera Interactiva del Dashboard */}
-        <header className="page-header" style={{ paddingBottom: 16, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16 }}>
+        <header style={{ padding: "0 0 4px 0", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16 }}>
           <div>
             <p className="page-header-sub" style={{ marginBottom: 4, display: "flex", alignItems: "center", gap: 8 }}>
               <span>{saludo} 👋</span>
@@ -235,7 +235,7 @@ export default function DashboardClient({
                 {selectedDate.toLocaleDateString("es-AR", { weekday: "long", day: "numeric", month: "long" })}
               </span>
             </p>
-            <h1 style={{ fontSize: 32, fontWeight: 700, color: "var(--on-surface)", margin: 0 }}>Dashboard</h1>
+            <h1 style={{ fontSize: 28, fontWeight: 700, color: "var(--on-surface)", margin: 0 }}>Resumen</h1>
           </div>
 
           {/* Tab Selector de Vista (Diaria vs Semanal) */}
@@ -289,7 +289,6 @@ export default function DashboardClient({
           border: "1px solid rgba(255,255,255,0.05)",
           borderRadius: 12,
           padding: "8px 16px",
-          marginBottom: 20,
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
@@ -473,7 +472,7 @@ export default function DashboardClient({
         {viewMode === "diaria" && (
           <>
             {esFinDeSemanaSelected && (
-              <div style={{ background: "rgba(255,185,95,0.12)", border: "1px solid rgba(255,185,95,0.3)", borderRadius: 12, padding: "16px 20px", display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
+              <div style={{ background: "rgba(255,185,95,0.12)", border: "1px solid rgba(255,185,95,0.3)", borderRadius: 12, padding: "16px 20px", display: "flex", alignItems: "center", gap: 12 }}>
                 <span className="material-symbols-outlined" style={{ color: "#ffb95f", fontSize: 28 }}>weekend</span>
                 <div>
                   <div style={{ fontWeight: 600, color: "var(--on-surface)" }}>El día seleccionado es fin de semana o feriado</div>
@@ -483,7 +482,7 @@ export default function DashboardClient({
             )}
 
             {!esFinDeSemanaSelected && (
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginBottom: 24 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
 
                 {/* Tarjeta Estado del Equipo */}
                 <div className="status-list-card" style={{ padding: 0, background: "rgba(30,41,59,0.7)", borderRadius: 12 }}>
@@ -638,7 +637,7 @@ export default function DashboardClient({
             VISTA SEMANAL: GRID DE TARJETAS DIARIAS
             ======================================================== */}
         {viewMode === "semanal" && (
-          <div style={{ marginBottom: 24 }}>
+          <div>
             <h3 style={{ fontSize: 18, fontWeight: 600, color: "var(--on-surface)", marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}>
               <span className="material-symbols-outlined" style={{ color: "#adc6ff" }}>calendar_view_week</span>
               Resumen de Asistencia Semanal por Día
