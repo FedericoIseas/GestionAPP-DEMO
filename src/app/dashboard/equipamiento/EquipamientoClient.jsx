@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import * as XLSX from "xlsx";
 
 const TIPOS = ["Notebook", "Monitor", "Periférico", "Software", "Otro"];
 const ESTADOS = ["Disponible", "En uso", "En reparación", "Dado de baja"];
@@ -21,6 +22,40 @@ export default function EquipamientoClient({ equipos: initial, miembros }) {
   const [form, setForm] = useState(EMPTY);
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState("");
+  const [copiedId, setCopiedId] = useState(null);
+
+  function handleCopy(e) {
+    const miembro = e.miembros ? `${e.miembros.apellido}, ${e.miembros.nombre}` : "Sin asignar";
+    const text = `📋 Detalles de Equipamiento
+──────────────────────────────
+• Nombre: ${e.nombre}
+• Tipo: ${e.tipo || "—"}
+• Marca/Modelo: ${[e.marca, e.modelo].filter(Boolean).join(" ") || "—"}
+• N° Serie: ${e.numero_serie || "—"}
+• Asignado a: ${miembro}
+• Estado: ${e.estado}`;
+
+    navigator.clipboard.writeText(text);
+    setCopiedId(e.id);
+    setTimeout(() => setCopiedId(null), 2000);
+  }
+
+  function exportExcel() {
+    const data = equipos.map(eq => ({
+      "Nombre": eq.nombre,
+      "Tipo": eq.tipo || "",
+      "Marca": eq.marca || "",
+      "Modelo": eq.modelo || "",
+      "N° Serie": eq.numero_serie || "",
+      "Asignado A": eq.miembros ? `${eq.miembros.apellido}, ${eq.miembros.nombre}` : "Sin asignar",
+      "Estado": eq.estado,
+      "Notas": eq.notas || ""
+    }));
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Equipamiento");
+    XLSX.writeFile(workbook, "Listado_Equipamiento.xlsx");
+  }
 
   function openNew() { setEditing(null); setForm(EMPTY); setShowModal(true); }
   function openEdit(e) {
@@ -68,10 +103,20 @@ export default function EquipamientoClient({ equipos: initial, miembros }) {
           <h1>Equipamiento</h1>
           <p className="page-header-sub">{equipos.length} items activos</p>
         </div>
-        <button className="btn-primary" onClick={openNew}>
-          <span className="material-symbols-outlined" style={{ fontSize: 20 }}>add_circle</span>
-          Nuevo equipo
-        </button>
+        <div style={{ display: "flex", gap: 12 }}>
+          <button className="btn-secondary" onClick={exportExcel}>
+            <span className="material-symbols-outlined" style={{ fontSize: 20 }}>description</span>
+            Excel
+          </button>
+          <button className="btn-secondary" onClick={() => window.print()}>
+            <span className="material-symbols-outlined" style={{ fontSize: 20 }}>picture_as_pdf</span>
+            PDF
+          </button>
+          <button className="btn-primary" onClick={openNew}>
+            <span className="material-symbols-outlined" style={{ fontSize: 20 }}>add_circle</span>
+            Nuevo equipo
+          </button>
+        </div>
       </div>
 
       <div className="content-stage">
@@ -100,9 +145,9 @@ export default function EquipamientoClient({ equipos: initial, miembros }) {
               <thead>
                 <tr>
                   <th>Nombre</th>
-                  <th>Tipo</th>
+                  <th className="hide-mobile">Tipo</th>
                   <th>Marca / Modelo</th>
-                  <th>N° Serie</th>
+                  <th className="hide-mobile">N° Serie</th>
                   <th>Asignado a</th>
                   <th>Estado</th>
                   <th style={{ width: 100 }}>Acciones</th>
@@ -111,14 +156,17 @@ export default function EquipamientoClient({ equipos: initial, miembros }) {
               <tbody>
                 {filtered.map(e => (
                   <tr key={e.id}>
-                    <td style={{ fontWeight: 500 }}>{e.nombre}</td>
-                    <td style={{ color: "var(--on-surface-variant)", fontSize: 13 }}>{e.tipo || "—"}</td>
-                    <td style={{ color: "var(--on-surface-variant)", fontSize: 13 }}>{[e.marca, e.modelo].filter(Boolean).join(" ") || "—"}</td>
-                    <td style={{ fontFamily: "var(--font-mono)", fontSize: 12, color: "var(--on-surface-variant)" }}>{e.numero_serie || "—"}</td>
-                    <td style={{ fontSize: 13 }}>{e.miembros ? `${e.miembros.apellido}, ${e.miembros.nombre}` : <span style={{ color: "var(--outline)" }}>Sin asignar</span>}</td>
-                    <td><span className={`badge ${ESTADO_BADGE[e.estado] || "badge-gray"}`}>{e.estado}</span></td>
-                    <td>
+                    <td data-label="Nombre" style={{ fontWeight: 500 }}>{e.nombre}</td>
+                    <td data-label="Tipo" className="hide-mobile" style={{ color: "var(--on-surface-variant)", fontSize: 13 }}>{e.tipo || "—"}</td>
+                    <td data-label="Marca / Modelo" style={{ color: "var(--on-surface-variant)", fontSize: 13 }}>{[e.marca, e.modelo].filter(Boolean).join(" ") || "—"}</td>
+                    <td data-label="N° Serie" className="hide-mobile" style={{ fontFamily: "var(--font-mono)", fontSize: 12, color: "var(--on-surface-variant)" }}>{e.numero_serie || "—"}</td>
+                    <td data-label="Asignado a" style={{ fontSize: 13 }}>{e.miembros ? `${e.miembros.apellido}, ${e.miembros.nombre}` : <span style={{ color: "var(--outline)" }}>Sin asignar</span>}</td>
+                    <td data-label="Estado"><span className={`badge ${ESTADO_BADGE[e.estado] || "badge-gray"}`}>{e.estado}</span></td>
+                    <td data-label="Acciones">
                       <div className="table-actions">
+                        <button className="btn-sm" onClick={() => handleCopy(e)} title="Copiar detalles" style={{ color: copiedId === e.id ? "var(--secondary)" : "var(--on-surface-variant)" }}>
+                          <span className="material-symbols-outlined" style={{ fontSize: 18 }}>{copiedId === e.id ? "check" : "content_copy"}</span>
+                        </button>
                         <button className="btn-sm" onClick={() => openEdit(e)}><span className="material-symbols-outlined" style={{ fontSize: 18 }}>edit</span></button>
                         <button className="btn-sm" onClick={() => handleDelete(e)} style={{ color: "var(--error)" }}><span className="material-symbols-outlined" style={{ fontSize: 18 }}>delete</span></button>
                       </div>

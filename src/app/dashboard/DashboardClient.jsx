@@ -482,7 +482,7 @@ export default function DashboardClient({
             )}
 
             {!esFinDeSemanaSelected && (
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 12 }}>
 
                 {/* Tarjeta Estado del Equipo */}
                 <div className="status-list-card" style={{ padding: 0, background: "rgba(30,41,59,0.7)", borderRadius: 12 }}>

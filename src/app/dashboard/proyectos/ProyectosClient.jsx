@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import CustomSelect from "@/components/ui/CustomSelect";
+import * as XLSX from "xlsx";
 
 const ESTADOS = ["Pendiente", "En curso", "Completado", "Pausado"];
 const ESTADO_BADGE = {
@@ -43,6 +44,47 @@ export default function ProyectosClient({ proyectos: initial, miembros }) {
   const [loadingNotas, setLoadingNotas] = useState(false);
   const [savingNota, setSavingNota] = useState(false);
   const [deleting, setDeleting] = useState(null);
+  const [copiedId, setCopiedId] = useState(null);
+
+  function handleCopy(p) {
+    const responsable = p.equipo_asignado
+      ? `${p.equipo_asignado} (Equipo)`
+      : p.miembros
+      ? `${p.miembros.apellido}, ${p.miembros.nombre}`
+      : "Sin asignar";
+    
+    const ultimaNota = p.notas_proyecto && p.notas_proyecto.length > 0
+      ? p.notas_proyecto[0].contenido
+      : "—";
+
+    const text = `📋 Detalles de Tarea
+──────────────────────────────
+• Tarea: ${p.nombre}
+• Descripción: ${p.descripcion || "—"}
+• Responsable: ${responsable}
+• Estado: ${p.estado}
+• Fecha Límite: ${formatDate(p.fecha_limite)}
+• Última Nota: ${ultimaNota}`;
+
+    navigator.clipboard.writeText(text);
+    setCopiedId(p.id);
+    setTimeout(() => setCopiedId(null), 2000);
+  }
+
+  function exportExcel() {
+    const data = proyectos.map(p => ({
+      "Tarea": p.nombre,
+      "Descripción": p.descripcion || "",
+      "Responsable": p.equipo_asignado ? `${p.equipo_asignado} (Equipo)` : p.miembros ? `${p.miembros.apellido}, ${p.miembros.nombre}` : "Sin asignar",
+      "Estado": p.estado,
+      "Fecha Límite": p.fecha_limite,
+      "Última Nota": p.notas_proyecto && p.notas_proyecto.length > 0 ? p.notas_proyecto[0].contenido : ""
+    }));
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Tareas");
+    XLSX.writeFile(workbook, "Listado_Tareas.xlsx");
+  }
 
   useEffect(() => {
     function handleKeyDown(e) {
@@ -146,10 +188,20 @@ export default function ProyectosClient({ proyectos: initial, miembros }) {
           <h1>Tareas</h1>
           <p className="page-header-sub">{proyectos.length} tareas activas</p>
         </div>
-        <button className="btn-primary" onClick={openNew}>
-          <span className="material-symbols-outlined" style={{ fontSize: 20 }}>add_circle</span>
-          Nueva tarea
-        </button>
+        <div style={{ display: "flex", gap: 12 }}>
+          <button className="btn-secondary" onClick={exportExcel}>
+            <span className="material-symbols-outlined" style={{ fontSize: 20 }}>description</span>
+            Excel
+          </button>
+          <button className="btn-secondary" onClick={() => window.print()}>
+            <span className="material-symbols-outlined" style={{ fontSize: 20 }}>picture_as_pdf</span>
+            PDF
+          </button>
+          <button className="btn-primary" onClick={openNew}>
+            <span className="material-symbols-outlined" style={{ fontSize: 20 }}>add_circle</span>
+            Nueva tarea
+          </button>
+        </div>
       </div>
 
       <div className="content-stage">
@@ -212,7 +264,7 @@ export default function ProyectosClient({ proyectos: initial, miembros }) {
                             <th>Tarea</th>
                             <th>Responsable</th>
                             <th>Estado</th>
-                            <th>Última actualización</th>
+                            <th className="hide-mobile">Última actualización</th>
                             <th>Fecha límite</th>
                             <th style={{ width: 140 }}>Acciones</th>
                           </tr>
@@ -222,11 +274,11 @@ export default function ProyectosClient({ proyectos: initial, miembros }) {
                             const ultimaNota = p.notas_proyecto && p.notas_proyecto.length > 0 ? p.notas_proyecto[0] : null;
                             return (
                             <tr key={p.id}>
-                              <td>
+                              <td data-label="Tarea">
                                 <div style={{ fontWeight: 500 }}>{p.nombre}</div>
                                 {p.descripcion && <div style={{ fontSize: 12, color: "var(--on-surface-variant)", marginTop: 2 }}>{p.descripcion}</div>}
                               </td>
-                              <td style={{ fontSize: 13 }}>
+                              <td data-label="Responsable" style={{ fontSize: 13 }}>
                                 {p.equipo_asignado ? (
                                   <span style={{ fontWeight: 600, color: "var(--primary)" }}>{p.equipo_asignado} (Equipo)</span>
                                 ) : p.miembros ? (
@@ -235,8 +287,8 @@ export default function ProyectosClient({ proyectos: initial, miembros }) {
                                   <span style={{ color: "var(--outline)" }}>Sin asignar</span>
                                 )}
                               </td>
-                              <td><span className={`badge ${ESTADO_BADGE[p.estado] || "badge-gray"}`}>{p.estado}</span></td>
-                              <td style={{ maxWidth: 250 }}>
+                              <td data-label="Estado"><span className={`badge ${ESTADO_BADGE[p.estado] || "badge-gray"}`}>{p.estado}</span></td>
+                              <td data-label="Actualización" className="hide-mobile" style={{ maxWidth: 250 }}>
                                 {ultimaNota ? (
                                   <div style={{ cursor: "pointer" }} onClick={() => openNotas(p)}>
                                     <div style={{
@@ -255,9 +307,12 @@ export default function ProyectosClient({ proyectos: initial, miembros }) {
                                   </span>
                                 )}
                               </td>
-                              <td style={{ fontFamily: "var(--font-mono)", fontSize: 13 }}>{formatDate(p.fecha_limite)}</td>
-                              <td>
+                              <td data-label="Límite" style={{ fontFamily: "var(--font-mono)", fontSize: 13 }}>{formatDate(p.fecha_limite)}</td>
+                              <td data-label="Acciones">
                                 <div className="table-actions">
+                                  <button className="btn-sm" onClick={() => handleCopy(p)} title="Copiar tarea" style={{ color: copiedId === p.id ? "var(--secondary)" : "var(--on-surface-variant)" }}>
+                                    <span className="material-symbols-outlined" style={{ fontSize: 18 }}>{copiedId === p.id ? "check" : "content_copy"}</span>
+                                  </button>
                                   {p.estado !== "Completado" && (
                                     <button className="btn-sm" onClick={() => marcarCompletado(p)} title="Marcar completado" style={{ color: "var(--primary)" }}>
                                       <span className="material-symbols-outlined" style={{ fontSize: 18 }}>check_circle</span>
@@ -296,7 +351,7 @@ export default function ProyectosClient({ proyectos: initial, miembros }) {
                         <th>Tarea</th>
                         <th>Responsable</th>
                         <th>Estado</th>
-                        <th>Última actualización</th>
+                        <th className="hide-mobile">Última actualización</th>
                         <th>Fecha límite</th>
                         <th style={{ width: 140 }}>Acciones</th>
                       </tr>
@@ -306,11 +361,11 @@ export default function ProyectosClient({ proyectos: initial, miembros }) {
                         const ultimaNota = p.notas_proyecto && p.notas_proyecto.length > 0 ? p.notas_proyecto[0] : null;
                         return (
                         <tr key={p.id}>
-                          <td>
+                          <td data-label="Tarea">
                             <div style={{ fontWeight: 500 }}>{p.nombre}</div>
                             {p.descripcion && <div style={{ fontSize: 12, color: "var(--on-surface-variant)", marginTop: 2 }}>{p.descripcion}</div>}
                           </td>
-                          <td style={{ fontSize: 13 }}>
+                          <td data-label="Responsable" style={{ fontSize: 13 }}>
                             {p.equipo_asignado ? (
                               <span style={{ fontWeight: 600, color: "var(--primary)" }}>{p.equipo_asignado} (Equipo)</span>
                             ) : p.miembros ? (
@@ -319,8 +374,8 @@ export default function ProyectosClient({ proyectos: initial, miembros }) {
                               <span style={{ color: "var(--outline)" }}>Sin asignar</span>
                             )}
                           </td>
-                          <td><span className={`badge ${ESTADO_BADGE[p.estado] || "badge-gray"}`}>{p.estado}</span></td>
-                          <td style={{ maxWidth: 250 }}>
+                          <td data-label="Estado"><span className={`badge ${ESTADO_BADGE[p.estado] || "badge-gray"}`}>{p.estado}</span></td>
+                          <td data-label="Actualización" className="hide-mobile" style={{ maxWidth: 250 }}>
                             {ultimaNota ? (
                               <div style={{ cursor: "pointer" }} onClick={() => openNotas(p)}>
                                 <div style={{
@@ -339,9 +394,12 @@ export default function ProyectosClient({ proyectos: initial, miembros }) {
                               </span>
                             )}
                           </td>
-                          <td style={{ fontFamily: "var(--font-mono)", fontSize: 13 }}>{formatDate(p.fecha_limite)}</td>
-                          <td>
+                          <td data-label="Límite" style={{ fontFamily: "var(--font-mono)", fontSize: 13 }}>{formatDate(p.fecha_limite)}</td>
+                          <td data-label="Acciones">
                             <div className="table-actions">
+                              <button className="btn-sm" onClick={() => handleCopy(p)} title="Copiar tarea" style={{ color: copiedId === p.id ? "var(--secondary)" : "var(--on-surface-variant)" }}>
+                                <span className="material-symbols-outlined" style={{ fontSize: 18 }}>{copiedId === p.id ? "check" : "content_copy"}</span>
+                              </button>
                               <button className="btn-sm" onClick={() => openNotas(p)} title="Notas" style={{ color: "var(--tertiary)" }}>
                                 <span className="material-symbols-outlined" style={{ fontSize: 18 }}>sticky_note_2</span>
                               </button>

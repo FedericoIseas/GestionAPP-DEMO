@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
+import * as XLSX from "xlsx";
 
 const DIAS_LABORALES = [
   { value: 1, label: "Lunes" },
@@ -17,6 +18,44 @@ export default function HorariosClient({ horarios: initial, miembros }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
+  const [copiedId, setCopiedId] = useState(null);
+
+  function handleCopy(m) {
+    const mDraft = draft[m.id] || { 1: false, 2: false, 3: false, 4: false, 5: false };
+    const getStatusText = (val) => val ? "🏡 Home Office" : "🏢 Presencial";
+    const text = `📋 Cronograma de Home Office
+──────────────────────────────
+• Miembro: ${m.apellido}, ${m.nombre}
+• Equipo: ${m.equipo || "—"}
+• Lunes: ${getStatusText(mDraft[1])}
+• Martes: ${getStatusText(mDraft[2])}
+• Miércoles: ${getStatusText(mDraft[3])}
+• Jueves: ${getStatusText(mDraft[4])}
+• Viernes: ${getStatusText(mDraft[5])}`;
+
+    navigator.clipboard.writeText(text);
+    setCopiedId(m.id);
+    setTimeout(() => setCopiedId(null), 2000);
+  }
+
+  function exportExcel() {
+    const data = miembros.map(m => {
+      const mDraft = draft[m.id] || { 1: false, 2: false, 3: false, 4: false, 5: false };
+      return {
+        "Miembro": `${m.apellido}, ${m.nombre}`,
+        "Equipo": m.equipo || "",
+        "Lunes": mDraft[1] ? "Home Office" : "Presencial",
+        "Martes": mDraft[2] ? "Home Office" : "Presencial",
+        "Miércoles": mDraft[3] ? "Home Office" : "Presencial",
+        "Jueves": mDraft[4] ? "Home Office" : "Presencial",
+        "Viernes": mDraft[5] ? "Home Office" : "Presencial"
+      };
+    });
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Cronograma HO");
+    XLSX.writeFile(workbook, "Cronograma_Home_Office.xlsx");
+  }
 
   useEffect(() => {
     const newDraft = {};
@@ -107,6 +146,14 @@ export default function HorariosClient({ horarios: initial, miembros }) {
               Guardado con éxito
             </span>
           )}
+          <button className="btn-secondary" onClick={exportExcel}>
+            <span className="material-symbols-outlined" style={{ fontSize: 20 }}>description</span>
+            Excel
+          </button>
+          <button className="btn-secondary" onClick={() => window.print()}>
+            <span className="material-symbols-outlined" style={{ fontSize: 20 }}>picture_as_pdf</span>
+            PDF
+          </button>
           <button className="btn-primary" onClick={handleSave} disabled={saving}>
             <span className="material-symbols-outlined" style={{ fontSize: 20 }}>save</span>
             {saving ? "Guardando..." : "Guardar todo"}
@@ -120,19 +167,31 @@ export default function HorariosClient({ horarios: initial, miembros }) {
             <thead>
               <tr>
                 <th>Miembro</th>
-                <th>Equipo</th>
-                {DIAS_LABORALES.map(d => <th key={d.value} style={{ textAlign: "center" }}>{d.label}</th>)}
+                <th className="hide-mobile">Equipo</th>
+                {DIAS_LABORALES.map(d => (
+                  <th key={d.value} style={{ textAlign: "center" }}>
+                    <span className="hide-mobile">{d.label}</span>
+                    <span className="show-mobile">{d.label.slice(0, 3)}</span>
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody>
               {miembrosOrdenados.map(m => (
                 <tr key={m.id} style={{ transition: "background 0.2s" }}>
-                  <td style={{ fontWeight: 500 }}>{m.apellido}, {m.nombre}</td>
-                  <td style={{ fontSize: 13, color: "var(--outline)" }}>{m.equipo || "—"}</td>
+                  <td data-label="Miembro" style={{ fontWeight: 500 }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, width: "100%" }}>
+                      <span>{m.apellido}, {m.nombre}</span>
+                      <button className="btn-sm" onClick={() => handleCopy(m)} title="Copiar cronograma" style={{ padding: 4, minHeight: 0, color: copiedId === m.id ? "var(--secondary)" : "var(--on-surface-variant)" }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: 16 }}>{copiedId === m.id ? "check" : "content_copy"}</span>
+                      </button>
+                    </div>
+                  </td>
+                  <td data-label="Equipo" className="hide-mobile" style={{ fontSize: 13, color: "var(--outline)" }}>{m.equipo || "—"}</td>
                   {DIAS_LABORALES.map(d => {
                     const isHO = draft[m.id] ? draft[m.id][d.value] : false;
                     return (
-                      <td key={d.value} style={{ textAlign: "center", padding: "8px" }}>
+                      <td key={d.value} data-label={d.label} style={{ textAlign: "center", padding: "8px" }}>
                         <div 
                           onClick={() => handleToggle(m.id, d.value)}
                           style={{

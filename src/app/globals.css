@@ -891,7 +891,15 @@ button {
   }
 }
 
+.show-mobile {
+  display: none !important;
+}
+
 @media (max-width: 640px) {
+  .show-mobile {
+    display: inline !important;
+  }
+
   .stats-grid {
     grid-template-columns: 1fr;
   }
@@ -1651,6 +1659,103 @@ button {
   }
 }
 
+/* Transformación de tablas en lista de tarjetas en móvil */
+@media (max-width: 768px) {
+  .data-table-wrapper {
+    background: transparent !important;
+    border: none !important;
+    overflow-x: visible !important;
+  }
+
+  .data-table {
+    display: block !important;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .data-table thead {
+    display: none !important;
+  }
+
+  .data-table tbody {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+  }
+
+  .data-table tbody tr {
+    display: block !important;
+    background: rgba(30, 41, 59, 0.7) !important;
+    backdrop-filter: blur(12px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 16px !important;
+    padding: 16px !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+    transition: all 0.2s !important;
+  }
+
+  .data-table tbody tr:hover {
+    background: rgba(30, 41, 59, 0.9) !important;
+    border-color: rgba(173, 198, 255, 0.2) !important;
+  }
+
+  .data-table td {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 8px 0 !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03) !important;
+    text-align: right !important;
+    font-size: 14px !important;
+    min-height: 38px !important;
+  }
+
+  .data-table td:last-child {
+    border-bottom: none !important;
+    margin-top: 4px !important;
+    padding-bottom: 0 !important;
+  }
+
+  .data-table td[data-label]::before {
+    content: attr(data-label) !important;
+    font-family: var(--font-mono) !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    color: var(--on-surface-variant) !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.04em !important;
+    text-align: left !important;
+    margin-right: 16px !important;
+  }
+
+  .table-actions {
+    width: 100% !important;
+    justify-content: flex-end !important;
+    gap: 8px !important;
+  }
+
+  /* Stack header elements and buttons on mobile */
+  .page-header {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 16px !important;
+    padding: 56px 16px 16px !important;
+  }
+
+  .page-header > div:last-child {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+    width: 100% !important;
+  }
+
+  .page-header .btn-primary,
+  .page-header .btn-secondary {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+}
+
 /* ============================================================
    COMPACT STATUS LIST CARD (ESTADO DEL EQUIPO TIPO LISTADO)
    ============================================================ */
@@ -1766,5 +1871,96 @@ button {
 
   .status-list-item {
     padding: 10px 0;
+  }
+}
+
+/* ============================================================
+   ESTILOS DE IMPRESIÓN (EXPORTAR PDF DE ALTA CALIDAD)
+   ============================================================ */
+@media print {
+  /* Ocultar barra lateral, menú, chat de asistencia, filtros y acciones */
+  aside,
+  .sidebar,
+  .mobile-overlay,
+  .ai-chat-shell,
+  .table-actions,
+  button,
+  .controls-panel,
+  .page-header-sub,
+  .search-wrapper,
+  .hide-print,
+  .btn-primary,
+  .btn-secondary {
+    display: none !important;
+  }
+
+  /* Ocupar el 100% de la página sin márgenes */
+  body,
+  .main-content,
+  .content-stage,
+  .page-container {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    background: white !important;
+    color: black !important;
+  }
+
+  .page-header {
+    padding: 0 0 20px 0 !important;
+    border-bottom: 2px solid #333 !important;
+    margin-bottom: 20px !important;
+  }
+
+  .page-header h1 {
+    color: black !important;
+    font-size: 24px !important;
+    margin: 0 !important;
+  }
+
+  /* Resetear estilos de tabla para impresora */
+  .data-table-wrapper {
+    background: transparent !important;
+    border: 1px solid #ccc !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+  }
+
+  .data-table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    color: black !important;
+    font-size: 12px !important;
+  }
+
+  /* Forzar visibilidad de headers y columnas en print */
+  .data-table thead {
+    display: table-header-group !important;
+  }
+
+  .data-table tr {
+    display: table-row !important;
+    page-break-inside: avoid !important;
+  }
+
+  .data-table th,
+  .data-table td {
+    display: table-cell !important;
+    border: 1px solid #ccc !important;
+    padding: 6px 8px !important;
+    color: black !important;
+    background: transparent !important;
+    text-align: left !important;
+  }
+
+  .data-table th {
+    background-color: #f0f0f0 !important;
+    font-weight: bold !important;
+  }
+
+  /* Forzar que las columnas ocultas en móvil sí se vean en el PDF */
+  .hide-mobile {
+    display: table-cell !important;
   }
 }

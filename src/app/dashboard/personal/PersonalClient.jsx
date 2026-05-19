@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import * as XLSX from "xlsx";
 
 const EQUIPOS = ["Director", "Coordinación", "Técnicos", "Expedientes", "Oficiales de Registro", "Analista Legal"];
 const EQUIPO_BADGE = {
@@ -33,6 +34,37 @@ export default function PersonalClient({ miembros: initialMiembros }) {
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState("");
   const [error, setError] = useState(null);
+  const [copiedId, setCopiedId] = useState(null);
+
+  function handleCopy(m) {
+    const text = `📋 Información de Miembro
+──────────────────────────────
+• Nombre: ${m.apellido}, ${m.nombre}
+• Puesto: ${m.puesto || "—"}
+• Equipo: ${m.equipo || "—"}
+• CUIT: ${m.cuit || "—"}
+• Email: ${m.email_laboral || "—"}`;
+
+    navigator.clipboard.writeText(text);
+    setCopiedId(m.id);
+    setTimeout(() => setCopiedId(null), 2000);
+  }
+
+  function exportExcel() {
+    const data = miembros.map(mem => ({
+      "Apellido": mem.apellido,
+      "Nombre": mem.nombre,
+      "Puesto": mem.puesto || "",
+      "Equipo": mem.equipo || "",
+      "CUIT": mem.cuit || "",
+      "Email Laboral": mem.email_laboral || "",
+      "Email Google": mem.email_google || ""
+    }));
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Personal");
+    XLSX.writeFile(workbook, "Listado_Personal.xlsx");
+  }
 
   function openNew() {
     setEditing(null);
@@ -130,10 +162,20 @@ export default function PersonalClient({ miembros: initialMiembros }) {
           <h1>Personal</h1>
           <p className="page-header-sub">{miembros.length} miembros activos</p>
         </div>
-        <button className="btn-primary" onClick={openNew}>
-          <span className="material-symbols-outlined" style={{ fontSize: 20 }}>person_add</span>
-          Nuevo miembro
-        </button>
+        <div style={{ display: "flex", gap: 12 }}>
+          <button className="btn-secondary" onClick={exportExcel}>
+            <span className="material-symbols-outlined" style={{ fontSize: 20 }}>description</span>
+            Excel
+          </button>
+          <button className="btn-secondary" onClick={() => window.print()}>
+            <span className="material-symbols-outlined" style={{ fontSize: 20 }}>picture_as_pdf</span>
+            PDF
+          </button>
+          <button className="btn-primary" onClick={openNew}>
+            <span className="material-symbols-outlined" style={{ fontSize: 20 }}>person_add</span>
+            Nuevo miembro
+          </button>
+        </div>
       </div>
 
       {/* Content */}
@@ -184,8 +226,8 @@ export default function PersonalClient({ miembros: initialMiembros }) {
                 <tr>
                   <th>Nombre</th>
                   <th>Puesto</th>
-                  <th>CUIT</th>
-                  <th>Email laboral</th>
+                  <th className="hide-mobile">CUIT</th>
+                  <th className="hide-mobile">Email laboral</th>
                   <th>Equipo</th>
                   <th style={{ width: 100 }}>Acciones</th>
                 </tr>
@@ -193,21 +235,24 @@ export default function PersonalClient({ miembros: initialMiembros }) {
               <tbody>
                 {filtered.map((m) => (
                   <tr key={m.id}>
-                    <td style={{ fontWeight: 500 }}>{m.apellido}, {m.nombre}</td>
-                    <td style={{ color: "var(--on-surface-variant)", fontSize: 13 }}>{m.puesto || "—"}</td>
-                    <td style={{ fontFamily: "var(--font-mono)", fontSize: 13, color: "var(--on-surface-variant)" }}>
+                    <td data-label="Nombre" style={{ fontWeight: 500 }}>{m.apellido}, {m.nombre}</td>
+                    <td data-label="Puesto" style={{ color: "var(--on-surface-variant)", fontSize: 13 }}>{m.puesto || "—"}</td>
+                    <td data-label="CUIT" className="hide-mobile" style={{ fontFamily: "var(--font-mono)", fontSize: 13, color: "var(--on-surface-variant)" }}>
                       {m.cuit || "—"}
                     </td>
-                    <td style={{ color: "var(--on-surface-variant)" }}>{m.email_laboral || "—"}</td>
-                    <td>
+                    <td data-label="Email" className="hide-mobile" style={{ color: "var(--on-surface-variant)" }}>{m.email_laboral || "—"}</td>
+                    <td data-label="Equipo">
                       {m.equipo ? (
                         <span className={`badge ${EQUIPO_BADGE[m.equipo] || "badge-gray"}`}>{m.equipo}</span>
                       ) : (
                         <span style={{ color: "var(--outline)" }}>—</span>
                       )}
                     </td>
-                    <td>
+                    <td data-label="Acciones">
                       <div className="table-actions">
+                        <button className="btn-sm" onClick={() => handleCopy(m)} title="Copiar información" style={{ color: copiedId === m.id ? "var(--secondary)" : "var(--on-surface-variant)" }}>
+                          <span className="material-symbols-outlined" style={{ fontSize: 18 }}>{copiedId === m.id ? "check" : "content_copy"}</span>
+                        </button>
                         <button className="btn-sm" onClick={() => openEdit(m)} title="Editar">
                           <span className="material-symbols-outlined" style={{ fontSize: 18 }}>edit</span>
                         </button>

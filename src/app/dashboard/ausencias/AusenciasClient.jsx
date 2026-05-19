@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
+import * as XLSX from "xlsx";
 
 const TIPOS = ["Vacaciones", "Licencia", "Ausencia", "Feriado", "Otro"];
 const TIPO_BADGE = {
@@ -28,6 +29,36 @@ export default function AusenciasClient({ ausencias: initial, miembros }) {
   const [form, setForm] = useState(EMPTY);
   const [saving, setSaving] = useState(false);
   const [importing, setImporting] = useState(false);
+  const [copiedId, setCopiedId] = useState(null);
+
+  function handleCopy(a) {
+    const miembro = a.miembros ? `${a.miembros.apellido}, ${a.miembros.nombre}` : "—";
+    const text = `📋 Registro de Ausencia
+──────────────────────────────
+• Miembro: ${miembro}
+• Tipo: ${a.tipo}
+• Desde: ${formatDate(a.fecha_inicio)}
+• Hasta: ${formatDate(a.fecha_fin)}
+• Notas: ${a.notas || "—"}`;
+
+    navigator.clipboard.writeText(text);
+    setCopiedId(a.id);
+    setTimeout(() => setCopiedId(null), 2000);
+  }
+
+  function exportExcel() {
+    const data = ausencias.map(aus => ({
+      "Miembro": aus.miembros ? `${aus.miembros.apellido}, ${aus.miembros.nombre}` : "—",
+      "Tipo": aus.tipo,
+      "Fecha Inicio": aus.fecha_inicio,
+      "Fecha Fin": aus.fecha_fin,
+      "Notas": aus.notas || ""
+    }));
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Ausencias");
+    XLSX.writeFile(workbook, "Listado_Ausencias.xlsx");
+  }
 
   async function handleImport() {
     if (!confirm("Esto va a leer el archivo 'Licencias Firma Digital.xlsx' y sumará las licencias a esta lista. ¿Continuar?")) return;
@@ -91,6 +122,14 @@ export default function AusenciasClient({ ausencias: initial, miembros }) {
           <p className="page-header-sub">{ausencias.length} registradas en la base de datos</p>
         </div>
         <div style={{ display: "flex", gap: 12 }}>
+          <button className="btn-secondary" onClick={exportExcel}>
+            <span className="material-symbols-outlined" style={{ fontSize: 20 }}>description</span>
+            Excel
+          </button>
+          <button className="btn-secondary" onClick={() => window.print()}>
+            <span className="material-symbols-outlined" style={{ fontSize: 20 }}>picture_as_pdf</span>
+            PDF
+          </button>
           <button className="btn-secondary" onClick={handleImport} disabled={importing}>
             <span className="material-symbols-outlined" style={{ fontSize: 20 }}>sync</span>
             {importing ? "Sincronizando..." : "Sincronizar Excel"}
@@ -123,20 +162,23 @@ export default function AusenciasClient({ ausencias: initial, miembros }) {
                   <th>Tipo</th>
                   <th>Desde</th>
                   <th>Hasta</th>
-                  <th>Notas</th>
+                  <th className="hide-mobile">Notas</th>
                   <th style={{ width: 100 }}>Acciones</th>
                 </tr>
               </thead>
               <tbody>
                 {ausencias.map(a => (
                   <tr key={a.id}>
-                    <td style={{ fontWeight: 500 }}>{a.miembros ? `${a.miembros.apellido}, ${a.miembros.nombre}` : "—"}</td>
-                    <td><span className={`badge ${TIPO_BADGE[a.tipo] || "badge-gray"}`}>{a.tipo}</span></td>
-                    <td style={{ fontFamily: "var(--font-mono)", fontSize: 13 }}>{formatDate(a.fecha_inicio)}</td>
-                    <td style={{ fontFamily: "var(--font-mono)", fontSize: 13 }}>{formatDate(a.fecha_fin)}</td>
-                    <td style={{ color: "var(--on-surface-variant)", fontSize: 13, maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.notas || "—"}</td>
-                    <td>
+                    <td data-label="Miembro" style={{ fontWeight: 500 }}>{a.miembros ? `${a.miembros.apellido}, ${a.miembros.nombre}` : "—"}</td>
+                    <td data-label="Tipo"><span className={`badge ${TIPO_BADGE[a.tipo] || "badge-gray"}`}>{a.tipo}</span></td>
+                    <td data-label="Desde" style={{ fontFamily: "var(--font-mono)", fontSize: 13 }}>{formatDate(a.fecha_inicio)}</td>
+                    <td data-label="Hasta" style={{ fontFamily: "var(--font-mono)", fontSize: 13 }}>{formatDate(a.fecha_fin)}</td>
+                    <td data-label="Notas" className="hide-mobile" style={{ color: "var(--on-surface-variant)", fontSize: 13, maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.notas || "—"}</td>
+                    <td data-label="Acciones">
                       <div className="table-actions">
+                        <button className="btn-sm" onClick={() => handleCopy(a)} title="Copiar detalles" style={{ color: copiedId === a.id ? "var(--secondary)" : "var(--on-surface-variant)" }}>
+                          <span className="material-symbols-outlined" style={{ fontSize: 18 }}>{copiedId === a.id ? "check" : "content_copy"}</span>
+                        </button>
                         <button className="btn-sm" onClick={() => openEdit(a)}><span className="material-symbols-outlined" style={{ fontSize: 18 }}>edit</span></button>
                         <button className="btn-sm" onClick={() => handleDelete(a)} style={{ color: "var(--error)" }}><span className="material-symbols-outlined" style={{ fontSize: 18 }}>delete</span></button>
                       </div>
